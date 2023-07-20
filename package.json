@@ -1,0 +1,31 @@
+{
+  "name": "m6-agency-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "sst dev",
+    "build": "sst build",
+    "deploy": "sst deploy",
+    "remove": "sst remove",
+    "console": "sst console",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "moment": "^2.29.4",
+    "mysql2": "^3.4.0",
+    "typeorm": "^0.3.17"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "@types/aws-lambda": "^8.10.119",
+    "@types/node": "^20.3.1",
+    "aws-cdk-lib": "2.84.0",
+    "constructs": "10.1.156",
+    "sst": "^2.16.3",
+    "utility-types": "^3.10.0"
+  },
+  "workspaces": [
+    "app/*"
+  ]
+}

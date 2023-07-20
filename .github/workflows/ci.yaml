@@ -1,0 +1,53 @@
+name: CI
+run-name: CI - ${{ github.event.inputs.branch }}
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch (Mx-123, v1.2.3)'
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - id: branch
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "branch=${{ github.event.inputs.branch }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.branch.outputs.branch }}
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE }}
+          aws-region: ap-southeast-1
+      - run: |
+          if [ ${{ startsWith(steps.branch.outputs.branch, 'v') }} == true ]; then
+            prefix="release"
+            tag=$(echo "${{ steps.branch.outputs.branch }}" | sed "s|^v|""|")
+            buildLatestTag=true
+          else
+            prefix="dev"
+            tag="${{ steps.branch.outputs.branch }}"
+            buildLatestTag=false
+          fi
+
+          s3Url="s3://${{ vars.S3_BUCKET_ARTIFACTS }}/$prefix/m6-agency-api"
+          outputFile="/tmp/$tag.tgz"
+
+          tar --exclude=.git -czf $outputFile ./
+
+          aws s3 cp $outputFile $s3Url/$tag.tgz
+
+          if [ $buildLatestTag == true ]; then
+            aws s3 cp $outputFile $s3Url/latest.tgz
+          fi
